@@ -5,10 +5,11 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Home, Plus, MapPin, CreditCard } from 'lucide-react'
+import { Home, Plus, MapPin, CreditCard, ExternalLink } from 'lucide-react'
 import { getAllDevices, type Device } from '@/lib/device-data'
 import { Switch } from '@/components/ui/switch'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { supabase } from '@/lib/supabase'
 
 export default function Dashboard() {
   const [devices, setDevices] = useState<Device[]>(getAllDevices())
@@ -45,6 +46,24 @@ export default function Dashboard() {
     setIsPaymentDialogOpen(false)
   }
 
+  const handleGoogleLogin = async () => {
+    if (!supabase) {
+      console.error('Supabase not initialized. Please check your environment variables.')
+      return
+    }
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    })
+
+    if (error) {
+      console.error('Google login error:', error)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -72,6 +91,10 @@ export default function Dashboard() {
               <Button size="sm" className="gap-2" onClick={() => setIsPaymentDialogOpen(true)}>
                 <CreditCard className="h-4 w-4" />
                 支付
+              </Button>
+              <Button size="sm" className="gap-2" onClick={handleGoogleLogin}>
+                <ExternalLink className="h-4 w-4" />
+                Google登录
               </Button>
             </div>
           </div>
