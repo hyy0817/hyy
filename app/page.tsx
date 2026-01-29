@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,6 +14,19 @@ import { supabase } from '@/lib/supabase'
 export default function Dashboard() {
   const [devices, setDevices] = useState<Device[]>(getAllDevices())
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    // 检查用户登录状态
+    const checkUser = async () => {
+      if (supabase) {
+        const { data: { user } } = await supabase.auth.getUser()
+        setUser(user)
+      }
+    }
+
+    checkUser()
+  }, [])
 
   const roomsData = [
     {
@@ -64,6 +77,21 @@ export default function Dashboard() {
     }
   }
 
+  const handleLogout = async () => {
+    if (!supabase) {
+      console.error('Supabase not initialized. Please check your environment variables.')
+      return
+    }
+
+    const { error } = await supabase.auth.signOut()
+
+    if (error) {
+      console.error('Logout error:', error)
+    } else {
+      setUser(null)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -92,10 +120,17 @@ export default function Dashboard() {
                 <CreditCard className="h-4 w-4" />
                 支付
               </Button>
-              <Button size="sm" className="gap-2" onClick={handleGoogleLogin}>
-                <ExternalLink className="h-4 w-4" />
-                Google登录
-              </Button>
+              {user ? (
+                <Button size="sm" className="gap-2" onClick={handleLogout}>
+                  <ExternalLink className="h-4 w-4" />
+                  登出
+                </Button>
+              ) : (
+                <Button size="sm" className="gap-2" onClick={handleGoogleLogin}>
+                  <ExternalLink className="h-4 w-4" />
+                  Google登录
+                </Button>
+              )}
             </div>
           </div>
         </div>
